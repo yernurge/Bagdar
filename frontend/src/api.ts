@@ -1,107 +1,69 @@
+import { ApiError, isApiErrorBody } from './api-error'
+import { mockApi } from './mocks/api'
 import type {
-  ApiErrorPayload,
-  BagdarApi,
   Config,
+  DialogRequest,
   DialogResponse,
-  Place,
+  EventRequest,
+  PlaceDetail,
   PlacesResponse,
   QrResponse,
-  Route,
-  Scene,
-  VoiceTurn,
+  RouteResponse,
+  SceneResponse,
 } from './types'
-import { ApiError } from './api-error'
-import { mockApi } from './mocks/api'
 
 const BASE_URL = '/api'
-const CATALOG_CACHE_KEY = 'bagdar:catalog:v1'
-
-export { ApiError } from './api-error'
+export const isMockMode = import.meta.env.VITE_USE_MOCKS !== 'false'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let response: Response
   try {
-    const response = await fetch(`${BASE_URL}${path}`, {
+    response = await fetch(`${BASE_URL}${path}`, {
       ...init,
       headers: { 'Content-Type': 'application/json', ...init?.headers },
     })
-
-    if (!response.ok) {
-      const payload = (await response.json().catch(() => null)) as ApiErrorPayload | null
-      throw new ApiError(
-        response.status,
-        payload?.error.code ?? 'INTERNAL',
-        payload?.error.message ?? `HTTP ${response.status}`,
-        payload?.error.details,
-      )
-    }
-
-    return (await response.json()) as T
-  } catch (error) {
-    if (error instanceof ApiError) throw error
+  } catch {
     throw new ApiError(0, 'NETWORK_UNAVAILABLE', 'Нет соединения с сервером')
   }
+
+  const body = await response.json().catch(() => null) as unknown
+  if (!response.ok) {
+    if (isApiErrorBody(body)) {
+      throw new ApiError(response.status, body.error.code, body.error.message, body.error.details)
+    }
+    throw new ApiError(response.status, 'INTERNAL', 'Не удалось выполнить запрос')
+  }
+  return body as T
 }
 
-const realApi: BagdarApi = {
-  config: () => request<Config>('/config'),
+export const api = {
+  getConfig: (lang = 'ru'): Promise<Config> => isMockMode ? mockApi.getConfig() : request(`/config?lang=${encodeURIComponent(lang)}`),
 
-  async places(lang: string): Promise<PlacesResponse> {
-    try {
-      const result = await request<PlacesResponse>(`/places?lang=${encodeURIComponent(lang)}`)
-      localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(result))
-      return result
-    } catch (error) {
-      const cached = localStorage.getItem(CATALOG_CACHE_KEY)
-      if (cached) {
-        try {
-          return JSON.parse(cached) as PlacesResponse
-        } catch {
-          localStorage.removeItem(CATALOG_CACHE_KEY)
-        }
-      }
-      throw error
-    }
-  },
+  getPlaces: (lang: string): Promise<PlacesResponse> =>
+    isMockMode ? mockApi.getPlaces(lang) : request(`/places?lang=${encodeURIComponent(lang)}`),
 
-  place: (id: number, lang: string) =>
-    request<Place>(`/places/${id}?lang=${encodeURIComponent(lang)}`),
+  getPlace: (id: number, lang: string): Promise<PlaceDetail> =>
+    isMockMode ? mockApi.getPlace(id, lang) : request(`/places/${id}?lang=${encodeURIComponent(lang)}`),
 
-  route: (id: number, mode: 'walk' | 'transit', fallback = false) =>
-    request<Route>(`/places/${id}/route?mode=${mode}&fallback=${fallback ? 1 : 0}`),
+  getRoute: (id: number, mode: 'walk' | 'transit', fallback = false, lang = 'ru'): Promise<RouteResponse> =>
+    isMockMode
+      ? mockApi.getRoute(id, mode, fallback, lang)
+      : request(`/places/${id}/route?mode=${mode}&fallback=${fallback ? 1 : 0}&lang=${encodeURIComponent(lang)}`),
 
-  dialog: (sessionId: string, turn: VoiceTurn, screen: string, lastPlaceId: number | null) =>
-    request<DialogResponse>('/dialog/turn', {
-      method: 'POST',
-      body: JSON.stringify({
-        session_id: sessionId,
-        lang: 'auto',
-        ...turn,
-        context: { screen, last_place_id: lastPlaceId },
-      }),
-    }),
+  dialogTurn: (payload: DialogRequest): Promise<DialogResponse> =>
+    isMockMode ? mockApi.dialogTurn(payload) : request('/dialog/turn', { method: 'POST', body: JSON.stringify(payload) }),
 
-  scene: (id: number) => request<Scene>(`/places/${id}/scene`),
+  getScene: (id: number, lang: string): Promise<SceneResponse> =>
+    isMockMode ? mockApi.getScene(id, lang) : request(`/places/${id}/scene?lang=${encodeURIComponent(lang)}`),
 
-  qr: (placeId: number, lang: string, sessionId: string) =>
-    request<QrResponse>('/qr', {
-      method: 'POST',
-      body: JSON.stringify({ place_id: placeId, lang, session_id: sessionId }),
-    }),
+  createQr: (placeId: number, lang: string, sessionId: string): Promise<QrResponse> =>
+    isMockMode
+      ? mockApi.createQr(placeId)
+      : request('/qr', { method: 'POST', body: JSON.stringify({ place_id: placeId, lang, session_id: sessionId }) }),
 
-  event: (sessionId, type, lang, placeId = null) =>
-    request<{ ok: true }>('/event', {
-      method: 'POST',
-      body: JSON.stringify({ session_id: sessionId, type, place_id: placeId, lang }),
-    }),
+  postEvent: (payload: EventRequest) =>
+    isMockMode ? mockApi.postEvent(payload) : request<{ ok: true }>('/event', { method: 'POST', body: JSON.stringify(payload) }),
 
   endSession: (sessionId: string) =>
-    request<{ ok: true }>('/session/end', {
-      method: 'POST',
-      body: JSON.stringify({ session_id: sessionId }),
-    }),
+    isMockMode ? mockApi.endSession(sessionId) : request<{ ok: true }>('/session/end', { method: 'POST', body: JSON.stringify({ session_id: sessionId }) }),
 }
-
-export const isMockMode = import.meta.env.VITE_USE_MOCKS === 'true'
-  || (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS !== 'false')
-
-export const api: BagdarApi = isMockMode ? mockApi : realApi

@@ -1,38 +1,44 @@
 # BaGdar frontend
 
-Voice-first kiosk interface for the BaGdar tourist guide. The frontend follows the frozen contracts in `docs/api/` and does not call routing, STT, or LLM providers directly.
+Интерфейс голосовой туристической стеллы по контракту `docs/api/` и `docs/flows/`.
 
-## Run
+## Запуск
 
 ```bash
 npm install
 npm run dev
 ```
 
-Vite proxies `/api` and `/static` to `http://localhost:8000` in development.
+Приложение откроется на `http://localhost:5173`. По умолчанию используется локальный контрактный mock-слой из `src/mocks/`, поэтому backend не нужен.
 
-Development uses contract-shaped data from `src/mocks/` by default, so the full kiosk flow works without FastAPI. To test the real backend instead:
+Для подключения backend:
 
 ```bash
-$env:VITE_USE_MOCKS='false'; npm run dev
+VITE_USE_MOCKS=false npm run dev
 ```
 
-Open `http://localhost:5173/?debug=1` for the tech-lead-only text fallback when no microphone is available. This control is never shown in the normal kiosk URL.
+Vite проксирует `/api` и `/static` на `http://localhost:8000`.
 
-## Checks
+## Голосовой сценарий
+
+- звук −42…−30 dBFS или сигнал присутствия будит стеллу;
+- речь выше −30 dBFS запускает Web Speech API;
+- тишина 1.2 секунды завершает реплику;
+- `POST /api/dialog/turn` возвращает `actions[]`, которые исполняются по порядку;
+- никаких кнопок или кликабельных точек на карте нет.
+
+Для проверки экранов в mock-режиме доступны служебные URL:
+
+- `/?screen=route`
+- `/?screen=scene`
+- `/?screen=qr`
+- `/?screen=sleep`
+
+Это только маршруты визуальной проверки, в интерфейсе туриста ссылки на них не показываются.
+
+## Проверка
 
 ```bash
 npm run check
 npm run build
 ```
-
-## Kiosk behaviour
-
-- sound above −42 dBFS wakes the idle screen;
-- speech above −30 dBFS starts a turn and 1.2 seconds of silence ends it;
-- Web Speech supplies text when supported, otherwise MediaRecorder sends `audio_b64`;
-- the backend controls screens through ordered `actions` from `/api/dialog/turn`;
-- session and QR timeouts come from `/api/config`;
-- the last catalogue response is cached for the offline fallback.
-- optional camera presence uses the browser face detector when available and a local motion fallback otherwise;
-- HuskyLens or another hardware bridge can dispatch `bagdar:presence` with `{ detail: { present: true } }`.

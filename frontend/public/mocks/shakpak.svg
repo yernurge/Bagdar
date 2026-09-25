@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
-  <rect width="1200" height="700" fill="#c9b48f"/><path d="M0 540L175 290l160 84 172-220 192 205 165-119 336 300v160H0z" fill="#806f51"/>
-  <path d="M367 700V420c0-112 70-204 158-204s158 92 158 204v280" fill="#162d21"/>
-  <path d="M446 700V440c0-62 35-113 79-113s79 51 79 113v260" fill="#d6c49f"/>
-  <g fill="none" stroke="#ede3ce" opacity=".3"><path d="M750 145c95-70 190-55 285 40"/><path d="M720 100c130-95 260-75 380 55"/><path d="M690 58c160-120 330-88 470 75"/></g>
-  <text x="70" y="90" fill="#0d291a" font-family="Arial" font-size="24" letter-spacing="7">SHAKPAK-ATA</text>
-</svg>
