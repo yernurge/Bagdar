@@ -1,6 +1,7 @@
 export type Language = 'kk' | 'ru' | 'en' | string
 export type AccessMode = 'walk' | 'transit'
-export type Screen = 'sleep' | 'home' | 'listening' | 'processing' | 'place' | 'scene' | 'qr' | 'error'
+export type Screen = 'sleep' | 'idle' | 'catalog' | 'card' | 'recording' | 'processing' | 'error_speech' | 'tarihsky' | 'qr'
+export type EventType = 'place_view' | 'route_click' | 'scene_open' | 'session_start'
 
 export interface Config {
   screen_id: string
@@ -102,4 +103,16 @@ export interface VoiceTurn {
   text?: string
   audio_b64?: string
   mime?: string
+}
+
+export interface BagdarApi {
+  config(): Promise<Config>
+  places(lang: string): Promise<PlacesResponse>
+  place(id: number, lang: string): Promise<Place>
+  route(id: number, mode: AccessMode, fallback?: boolean): Promise<Route>
+  dialog(sessionId: string, turn: VoiceTurn, screen: string, lastPlaceId: number | null): Promise<DialogResponse>
+  scene(id: number): Promise<Scene>
+  qr(placeId: number, lang: string, sessionId: string): Promise<QrResponse>
+  event(sessionId: string, type: EventType, lang: string, placeId?: number | null): Promise<{ ok: true }>
+  endSession(sessionId: string): Promise<{ ok: true }>
 }

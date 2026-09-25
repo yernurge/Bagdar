@@ -10,11 +10,22 @@ export interface Copy {
   approximate: string
   walk: string
   transit: string
+  minutes: string
+  then: string
+  now: string
   scan: string
   qrHint: string
   artistic: string
   sleepHint: string
   microphone: string
+  gesture: string
+  sceneDone: string
+  noScene: string
+  noPlace: string
+  goodbye: string
+  afterPlace: string
+  sendToPhone: string
+  routeNarration: (distance: string, minutes: number, direction: string, mode: string, approximate: boolean, firstStep?: string) => string
 }
 
 const copy: Record<'kk' | 'ru' | 'en', Copy> = {
@@ -30,11 +41,23 @@ const copy: Record<'kk' | 'ru' | 'en', Copy> = {
     approximate: 'Шамамен берілген бағыт',
     walk: 'Жаяу',
     transit: 'Көлікпен',
+    minutes: 'мин',
+    then: 'Бұрын',
+    now: 'Қазір',
     scan: 'Телефонмен сканерлеңіз',
     qrHint: 'Маршрут телефоныңызда ашылады',
     artistic: 'Көркем реконструкция',
     sleepHint: 'Маған жақындап, сұрағыңызды дауыстап айтыңыз',
     microphone: 'Микрофонға рұқсат қажет',
+    gesture: 'Ым тілінде сөйлесесіз бе? Көрсетіңіз!',
+    sceneDone: 'Тағы не көрсетейін?',
+    noScene: 'Бұл орынның тарихи көрінісі әзірге жоқ.',
+    noPlace: 'Орын табылмады. Мына орындардың бірін атаңыз:',
+    goodbye: 'Сау болыңыз! Жолыңыз болсын.',
+    afterPlace: 'Тарихын көрсетейін бе? Телефонға жіберейін бе?',
+    sendToPhone: 'Маршрутты телефонға жіберейін бе?',
+    routeNarration: (distance, minutes, direction, mode, approximate, firstStep) =>
+      `${mode}: ${distance}, шамамен ${minutes} минут. ${direction}. ${firstStep ?? ''} ${approximate ? 'Бұл шамамен берілген бағыт.' : ''}`.trim(),
   },
   ru: {
     hello: 'Здравствуйте! Давайте исследовать Мангистау.',
@@ -48,11 +71,23 @@ const copy: Record<'kk' | 'ru' | 'en', Copy> = {
     approximate: 'Примерный путь',
     walk: 'Пешком',
     transit: 'На транспорте',
+    minutes: 'мин',
+    then: 'Тогда',
+    now: 'Сейчас',
     scan: 'Сканируйте телефоном',
     qrHint: 'Маршрут откроется на вашем телефоне',
     artistic: 'Художественная реконструкция',
     sleepHint: 'Подойдите и задайте вопрос вслух',
     microphone: 'Нужен доступ к микрофону',
+    gesture: 'Общаетесь на языке жестов? Показывайте!',
+    sceneDone: 'Что ещё показать?',
+    noScene: 'У этого места пока нет исторической сцены.',
+    noPlace: 'Место не найдено. Назовите один из похожих вариантов:',
+    goodbye: 'До свидания! Хорошей прогулки.',
+    afterPlace: 'Показать историю? Отправить маршрут на телефон?',
+    sendToPhone: 'Отправить маршрут на телефон?',
+    routeNarration: (distance, minutes, direction, mode, approximate, firstStep) =>
+      `${mode}: ${distance}, около ${minutes} минут. ${direction}. ${firstStep ?? ''} ${approximate ? 'Это примерный путь.' : ''}`.trim(),
   },
   en: {
     hello: "Hello! Let's explore Mangystau.",
@@ -66,11 +101,23 @@ const copy: Record<'kk' | 'ru' | 'en', Copy> = {
     approximate: 'Approximate route',
     walk: 'Walking',
     transit: 'By transit',
+    minutes: 'min',
+    then: 'Then',
+    now: 'Now',
     scan: 'Scan with your phone',
     qrHint: 'The route will open on your phone',
     artistic: 'Artistic reconstruction',
     sleepHint: 'Come closer and ask your question aloud',
     microphone: 'Microphone access is required',
+    gesture: 'Do you use sign language? You can show me now.',
+    sceneDone: 'What else would you like to see?',
+    noScene: 'This place does not have a historical scene yet.',
+    noPlace: 'I could not find that place. Try one of these:',
+    goodbye: 'Goodbye, and enjoy your visit.',
+    afterPlace: 'Would you like to see its history or send the route to your phone?',
+    sendToPhone: 'Would you like to send the route to your phone?',
+    routeNarration: (distance, minutes, direction, mode, approximate, firstStep) =>
+      `${mode}: ${distance}, about ${minutes} minutes. ${direction}. ${firstStep ?? ''} ${approximate ? 'This is an approximate route.' : ''}`.trim(),
   },
 }
 

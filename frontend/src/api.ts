@@ -1,5 +1,6 @@
 import type {
   ApiErrorPayload,
+  BagdarApi,
   Config,
   DialogResponse,
   Place,
@@ -9,21 +10,13 @@ import type {
   Scene,
   VoiceTurn,
 } from './types'
+import { ApiError } from './api-error'
+import { mockApi } from './mocks/api'
 
 const BASE_URL = '/api'
 const CATALOG_CACHE_KEY = 'bagdar:catalog:v1'
 
-export class ApiError extends Error {
-  constructor(
-    public status: number,
-    public code: string,
-    message: string,
-    public details: Record<string, unknown> = {},
-  ) {
-    super(message)
-    this.name = 'ApiError'
-  }
-}
+export { ApiError } from './api-error'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
@@ -49,7 +42,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 }
 
-export const api = {
+const realApi: BagdarApi = {
   config: () => request<Config>('/config'),
 
   async places(lang: string): Promise<PlacesResponse> {
@@ -59,7 +52,13 @@ export const api = {
       return result
     } catch (error) {
       const cached = localStorage.getItem(CATALOG_CACHE_KEY)
-      if (cached) return JSON.parse(cached) as PlacesResponse
+      if (cached) {
+        try {
+          return JSON.parse(cached) as PlacesResponse
+        } catch {
+          localStorage.removeItem(CATALOG_CACHE_KEY)
+        }
+      }
       throw error
     }
   },
@@ -89,7 +88,7 @@ export const api = {
       body: JSON.stringify({ place_id: placeId, lang, session_id: sessionId }),
     }),
 
-  event: (sessionId: string, type: string, lang: string, placeId: number | null = null) =>
+  event: (sessionId, type, lang, placeId = null) =>
     request<{ ok: true }>('/event', {
       method: 'POST',
       body: JSON.stringify({ session_id: sessionId, type, place_id: placeId, lang }),
@@ -101,3 +100,8 @@ export const api = {
       body: JSON.stringify({ session_id: sessionId }),
     }),
 }
+
+export const isMockMode = import.meta.env.VITE_USE_MOCKS === 'true'
+  || (import.meta.env.DEV && import.meta.env.VITE_USE_MOCKS !== 'false')
+
+export const api: BagdarApi = isMockMode ? mockApi : realApi

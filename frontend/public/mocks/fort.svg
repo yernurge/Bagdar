@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 700">
+  <rect width="1200" height="700" fill="#d8b785"/><rect y="455" width="1200" height="245" fill="#786b50"/>
+  <circle cx="955" cy="132" r="75" fill="#f3d272"/><path d="M145 475V265h120V155h190v110h120v210z" fill="#f0e2bf"/>
+  <path d="M185 475V315h350v160M300 315V210h110v105" fill="none" stroke="#0d291a" stroke-width="13"/>
+  <g fill="none" stroke="#f0e2bf" opacity=".32"><path d="M690 130c115-95 235-80 360 20"/><path d="M650 90c155-125 320-105 470 30"/><path d="M625 55c190-150 390-125 560 48"/></g>
+  <text x="70" y="90" fill="#0d291a" font-family="Arial" font-size="24" letter-spacing="7">FORT-SHEVCHENKO</text>
+</svg>

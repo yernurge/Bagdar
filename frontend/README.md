@@ -11,6 +11,14 @@ npm run dev
 
 Vite proxies `/api` and `/static` to `http://localhost:8000` in development.
 
+Development uses contract-shaped data from `src/mocks/` by default, so the full kiosk flow works without FastAPI. To test the real backend instead:
+
+```bash
+$env:VITE_USE_MOCKS='false'; npm run dev
+```
+
+Open `http://localhost:5173/?debug=1` for the tech-lead-only text fallback when no microphone is available. This control is never shown in the normal kiosk URL.
+
 ## Checks
 
 ```bash
@@ -26,3 +34,5 @@ npm run build
 - the backend controls screens through ordered `actions` from `/api/dialog/turn`;
 - session and QR timeouts come from `/api/config`;
 - the last catalogue response is cached for the offline fallback.
+- optional camera presence uses the browser face detector when available and a local motion fallback otherwise;
+- HuskyLens or another hardware bridge can dispatch `bagdar:presence` with `{ detail: { present: true } }`.

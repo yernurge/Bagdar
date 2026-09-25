@@ -29,6 +29,7 @@ declare global {
 interface Options {
   enabled: boolean
   acceptSpeech: boolean
+  preferRecordedAudio: boolean
   locale: string
   onWake: () => void
   onSpeechStart: () => void
@@ -51,7 +52,7 @@ function blobToBase64(blob: Blob): Promise<string> {
   })
 }
 
-export function useKioskVoice({ enabled, acceptSpeech, locale, onWake, onSpeechStart, onTurn, onError }: Options) {
+export function useKioskVoice({ enabled, acceptSpeech, preferRecordedAudio, locale, onWake, onSpeechStart, onTurn, onError }: Options) {
   const [db, setDb] = useState(-72)
   const [permission, setPermission] = useState<'pending' | 'granted' | 'denied'>('pending')
   const callbacks = useRef({ acceptSpeech, onWake, onSpeechStart, onTurn, onError })
@@ -107,7 +108,7 @@ export function useKioskVoice({ enabled, acceptSpeech, locale, onWake, onSpeechS
       lastLoudAt = performance.now()
       callbacks.current.onSpeechStart()
 
-      const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition
+      const Recognition = preferRecordedAudio ? undefined : window.SpeechRecognition ?? window.webkitSpeechRecognition
       if (Recognition) {
         recognition = new Recognition()
         recognition.continuous = true
@@ -124,6 +125,7 @@ export function useKioskVoice({ enabled, acceptSpeech, locale, onWake, onSpeechS
           recognition = null
           speaking = false
           cooldownUntil = performance.now() + 1200
+          if (!active) return
           const text = transcript.trim()
           if (text) callbacks.current.onTurn({ text })
           else callbacks.current.onError()
@@ -180,7 +182,8 @@ export function useKioskVoice({ enabled, acceptSpeech, locale, onWake, onSpeechS
           const level = Math.max(-72, 20 * Math.log10(rms || 0.00001))
           setDb(level)
 
-          wakeFrames = level > WAKE_THRESHOLD ? wakeFrames + 1 : level < WAKE_THRESHOLD - HYSTERESIS_DB ? 0 : wakeFrames
+          const isWakeSound = level > WAKE_THRESHOLD && (level <= SPEECH_THRESHOLD || !callbacks.current.acceptSpeech)
+          wakeFrames = isWakeSound ? wakeFrames + 1 : level < WAKE_THRESHOLD - HYSTERESIS_DB || level > SPEECH_THRESHOLD ? 0 : wakeFrames
           speechFrames = level > SPEECH_THRESHOLD ? speechFrames + 1 : level < SPEECH_THRESHOLD - HYSTERESIS_DB ? 0 : speechFrames
 
           if (wakeFrames >= FRAMES_TO_TRIGGER) {
@@ -212,7 +215,7 @@ export function useKioskVoice({ enabled, acceptSpeech, locale, onWake, onSpeechS
       stream?.getTracks().forEach((track) => track.stop())
       void audioContext?.close()
     }
-  }, [enabled, locale])
+  }, [enabled, locale, preferRecordedAudio])
 
   return { db, permission }
 }
